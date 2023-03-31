@@ -3,6 +3,7 @@ package handler_test
 import (
     "errors"
     "github.com/gin-gonic/gin"
+    "github.com/stretchr/testify/assert"
     "golang-oauth/handler"
     "golang-oauth/services/servicesfakes"
     "net/http"
@@ -33,5 +34,19 @@ func TestHandler_CallbackFacebookHandler(t *testing.T) {
         w := httptest.NewRecorder()
         r.ServeHTTP(w, req)
     }
+}
 
+func TestHandler_HandleFacebookLoginHandler(t *testing.T) {
+    fbSvcMock := &servicesfakes.FakeFacebookOAuthInterface{}
+    h := handler.NewFacebookOauthHandler(fbSvcMock)
+
+    r := gin.New()
+    r.GET("/login/facebook", h.HandleFacebookLoginHandler)
+
+    req, _ := http.NewRequest(http.MethodGet, "/login/facebook", nil)
+    w := httptest.NewRecorder()
+    r.ServeHTTP(w, req)
+
+    assert.Equal(t, http.StatusOK, w.Code)
+    // assert.Equal(t, "/callback/facebook", w.Header().Get("Location"))
 }

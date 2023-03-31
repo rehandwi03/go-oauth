@@ -18,7 +18,8 @@ func init() {
 func main() {
 
     r := gin.New()
-    fbSvc := services.NewFacebookOauth()
+    common := services.NewCommon()
+    fbSvc := services.NewFacebookOauth(common)
     fbHandler := handler.NewFacebookOauthHandler(fbSvc)
 
     r.GET("/login/facebook", fbHandler.HandleFacebookLoginHandler)

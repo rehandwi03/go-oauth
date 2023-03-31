@@ -9,7 +9,19 @@ import (
     "strings"
 )
 
-func HandleLogin(c *gin.Context, oauthConf *oauth2.Config, oauthState string) {
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . CommonInterface
+type CommonInterface interface {
+    HandleLogin(ctx *gin.Context, oauthConf *oauth2.Config, oauthState string)
+}
+
+type common struct {
+}
+
+func NewCommon() CommonInterface {
+    return &common{}
+}
+
+func (c *common) HandleLogin(ctx *gin.Context, oauthConf *oauth2.Config, oauthState string) {
     URL, err := url.Parse(oauthConf.Endpoint.AuthURL)
     if err != nil {
         log.Println(err)
@@ -24,5 +36,5 @@ func HandleLogin(c *gin.Context, oauthConf *oauth2.Config, oauthState string) {
     url := URL.String()
 
     log.Println(url)
-    c.Redirect(http.StatusTemporaryRedirect, url)
+    ctx.Redirect(http.StatusTemporaryRedirect, url)
 }

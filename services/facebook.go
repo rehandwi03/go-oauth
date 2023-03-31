@@ -15,7 +15,8 @@ import (
 
 type (
     FacebookOAuth struct {
-        Cfg *oauth2.Config
+        Cfg    *oauth2.Config
+        Common CommonInterface
     }
 
     FacebookOAuthResponse struct {
@@ -30,7 +31,7 @@ type FacebookOAuthInterface interface {
     CallbackFacebook(code string) (email string, err error)
 }
 
-func NewFacebookOauth() FacebookOAuthInterface {
+func NewFacebookOauth(common CommonInterface) FacebookOAuthInterface {
     cfg := &oauth2.Config{
         ClientID:     os.Getenv("FACEBOOK_APP_ID"),
         ClientSecret: os.Getenv("FACEBOOK_APP_SECRET"),
@@ -39,11 +40,11 @@ func NewFacebookOauth() FacebookOAuthInterface {
         Scopes:       []string{"public_profile", "email"},
     }
 
-    return &FacebookOAuth{Cfg: cfg}
+    return &FacebookOAuth{Cfg: cfg, Common: common}
 }
 
 func (f *FacebookOAuth) HandleFacebookLogin(c *gin.Context) {
-    HandleLogin(c, f.Cfg, "state")
+    f.Common.HandleLogin(c, f.Cfg, "state")
 }
 
 func (f *FacebookOAuth) CallbackFacebook(code string) (email string, err error) {
