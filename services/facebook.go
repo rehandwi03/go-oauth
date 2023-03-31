@@ -2,6 +2,8 @@ package services
 
 import (
     "context"
+    "encoding/json"
+    "github.com/gin-gonic/gin"
     "golang.org/x/oauth2"
     "golang.org/x/oauth2/facebook"
     "io"
@@ -11,11 +13,24 @@ import (
     "os"
 )
 
-type FacebookOAuth struct {
-    cfg *oauth2.Config
+type (
+    FacebookOAuth struct {
+        Cfg *oauth2.Config
+    }
+
+    FacebookOAuthResponse struct {
+        Email string `json:"email"`
+        ID    string `json:"id"`
+    }
+)
+
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . FacebookOAuthInterface
+type FacebookOAuthInterface interface {
+    HandleFacebookLogin(c *gin.Context)
+    CallbackFacebook(code string) (email string, err error)
 }
 
-func NewFacebookOauth() *FacebookOAuth {
+func NewFacebookOauth() FacebookOAuthInterface {
     cfg := &oauth2.Config{
         ClientID:     os.Getenv("FACEBOOK_APP_ID"),
         ClientSecret: os.Getenv("FACEBOOK_APP_SECRET"),
@@ -24,47 +39,36 @@ func NewFacebookOauth() *FacebookOAuth {
         Scopes:       []string{"public_profile", "email"},
     }
 
-    return &FacebookOAuth{cfg: cfg}
+    return &FacebookOAuth{Cfg: cfg}
 }
 
-func (f *FacebookOAuth) HandleFacebookLogin(w http.ResponseWriter, r *http.Request) {
-    HandleLogin(w, r, f.cfg, "state")
+func (f *FacebookOAuth) HandleFacebookLogin(c *gin.Context) {
+    HandleLogin(c, f.Cfg, "state")
 }
 
-func (f *FacebookOAuth) CallbackFacebook(w http.ResponseWriter, r *http.Request) {
-    code := r.FormValue("code")
-    if code == "" {
-        http.Error(w, "code not found", http.StatusBadRequest)
-    }
-
-    log.Println("code")
-
-    token, err := f.cfg.Exchange(context.TODO(), code)
+func (f *FacebookOAuth) CallbackFacebook(code string) (email string, err error) {
+    token, err := f.Cfg.Exchange(context.TODO(), code)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-    }
-
-    log.Printf("token: %+v", token)
-
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
+        return email, err
     }
 
     resp, err := http.Get("https://graph.facebook.com/me?access_token=" +
         url.QueryEscape(token.AccessToken) + "&fields=email")
     if err != nil {
-        http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-        return
+        return email, err
     }
-
     defer resp.Body.Close()
 
-    response, err := io.ReadAll(resp.Body)
+    res, err := io.ReadAll(resp.Body)
     if err != nil {
-        http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-        return
+        return email, err
     }
 
-    w.Write([]byte("Hello, I'm protected\n"))
-    w.Write(response)
+    fbRes := FacebookOAuthResponse{}
+    if err := json.Unmarshal(res, &fbRes); err != nil {
+        log.Println(err)
+        return email, err
+    }
+
+    return fbRes.Email, nil
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+    "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
+    "golang-oauth/handler"
     "golang-oauth/services"
     "log"
     "net/http"
@@ -15,11 +17,16 @@ func init() {
 
 func main() {
 
-    fb := services.NewFacebookOauth()
+    r := gin.New()
+    fbSvc := services.NewFacebookOauth()
+    fbHandler := handler.NewFacebookOauthHandler(fbSvc)
 
-    http.HandleFunc("/login/facebook", fb.HandleFacebookLogin)
-    http.HandleFunc("/callback/facebook", fb.CallbackFacebook)
+    r.GET("/login/facebook", fbHandler.HandleFacebookLoginHandler)
+    r.GET("/callback/facebook", fbHandler.CallbackFacebookHandler)
+
+    // http.HandleFunc("/login/facebook", fbSvc.HandleFacebookLoginHandler)
+    // http.HandleFunc("/callback/facebook", fbSvc.CallbackFacebookHandler)
 
     log.Println("application started on port 8000")
-    log.Fatal(http.ListenAndServe(":8000", nil))
+    log.Fatal(http.ListenAndServe(":8000", r.Handler()))
 }

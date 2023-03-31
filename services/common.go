@@ -1,6 +1,7 @@
 package services
 
 import (
+    "github.com/gin-gonic/gin"
     "golang.org/x/oauth2"
     "log"
     "net/http"
@@ -8,7 +9,7 @@ import (
     "strings"
 )
 
-func HandleLogin(w http.ResponseWriter, r *http.Request, oauthConf *oauth2.Config, oauthState string) {
+func HandleLogin(c *gin.Context, oauthConf *oauth2.Config, oauthState string) {
     URL, err := url.Parse(oauthConf.Endpoint.AuthURL)
     if err != nil {
         log.Println(err)
@@ -23,5 +24,5 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, oauthConf *oauth2.Confi
     url := URL.String()
 
     log.Println(url)
-    http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+    c.Redirect(http.StatusTemporaryRedirect, url)
 }
