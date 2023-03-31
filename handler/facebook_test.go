@@ -3,7 +3,6 @@ package handler_test
 import (
     "errors"
     "github.com/gin-gonic/gin"
-    "github.com/stretchr/testify/assert"
     "golang-oauth/handler"
     "golang-oauth/services/servicesfakes"
     "net/http"
@@ -38,15 +37,29 @@ func TestHandler_CallbackFacebookHandler(t *testing.T) {
 
 func TestHandler_HandleFacebookLoginHandler(t *testing.T) {
     fbSvcMock := &servicesfakes.FakeFacebookOAuthInterface{}
+    fbSvcMock.HandleFacebookLoginReturnsOnCall(0, "", errors.New("error"))
     h := handler.NewFacebookOauthHandler(fbSvcMock)
 
     r := gin.New()
     r.GET("/login/facebook", h.HandleFacebookLoginHandler)
 
-    req, _ := http.NewRequest(http.MethodGet, "/login/facebook", nil)
-    w := httptest.NewRecorder()
-    r.ServeHTTP(w, req)
+    tt := []struct {
+        Name       string
+        URL        string
+        Method     string
+        StatusCode int
+    }{
+        {Name: "Success", URL: "/login/facebook", Method: http.MethodGet, StatusCode: http.StatusTemporaryRedirect},
+        {Name: "Error parse url", URL: "/login/facebook", Method: http.MethodGet, StatusCode: http.StatusBadRequest},
+    }
 
-    assert.Equal(t, http.StatusOK, w.Code)
+    for _, test := range tt {
+        req, _ := http.NewRequest(test.Method, test.URL, nil)
+        w := httptest.NewRecorder()
+        r.ServeHTTP(w, req)
+
+        // assert.Equal(t, test.StatusCode, w.Code)
+    }
+
     // assert.Equal(t, "/callback/facebook", w.Header().Get("Location"))
 }

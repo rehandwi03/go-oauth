@@ -3,7 +3,6 @@ package services
 import (
     "context"
     "encoding/json"
-    "github.com/gin-gonic/gin"
     "golang.org/x/oauth2"
     "golang.org/x/oauth2/facebook"
     "io"
@@ -27,7 +26,7 @@ type (
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . FacebookOAuthInterface
 type FacebookOAuthInterface interface {
-    HandleFacebookLogin(c *gin.Context)
+    HandleFacebookLogin() (res string, err error)
     CallbackFacebook(code string) (email string, err error)
 }
 
@@ -43,8 +42,14 @@ func NewFacebookOauth(common CommonInterface) FacebookOAuthInterface {
     return &FacebookOAuth{Cfg: cfg, Common: common}
 }
 
-func (f *FacebookOAuth) HandleFacebookLogin(c *gin.Context) {
-    f.Common.HandleLogin(c, f.Cfg, "state")
+func (f *FacebookOAuth) HandleFacebookLogin() (res string, err error) {
+    url, err := f.Common.HandleLogin(f.Cfg, "state")
+    if err != nil {
+        log.Println(err)
+        return res, err
+    }
+
+    return url, nil
 }
 
 func (f *FacebookOAuth) CallbackFacebook(code string) (email string, err error) {

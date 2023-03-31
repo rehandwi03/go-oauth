@@ -36,5 +36,12 @@ func (h *handler) CallbackFacebookHandler(c *gin.Context) {
 }
 
 func (h *handler) HandleFacebookLoginHandler(c *gin.Context) {
-    h.svc.HandleFacebookLogin(c)
+    url, err := h.svc.HandleFacebookLogin()
+    if err != nil {
+        c.AbortWithStatusJSON(http.StatusBadRequest, transport.Response{Message: "error parse url"})
+        return
+    }
+
+    c.Redirect(http.StatusTemporaryRedirect, url)
+    return
 }

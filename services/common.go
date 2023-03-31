@@ -1,17 +1,15 @@
 package services
 
 import (
-    "github.com/gin-gonic/gin"
     "golang.org/x/oauth2"
     "log"
-    "net/http"
     "net/url"
     "strings"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . CommonInterface
 type CommonInterface interface {
-    HandleLogin(ctx *gin.Context, oauthConf *oauth2.Config, oauthState string)
+    HandleLogin(oauthConf *oauth2.Config, oauthState string) (res string, err error)
 }
 
 type common struct {
@@ -21,10 +19,11 @@ func NewCommon() CommonInterface {
     return &common{}
 }
 
-func (c *common) HandleLogin(ctx *gin.Context, oauthConf *oauth2.Config, oauthState string) {
+func (c *common) HandleLogin(oauthConf *oauth2.Config, oauthState string) (res string, err error) {
     URL, err := url.Parse(oauthConf.Endpoint.AuthURL)
     if err != nil {
         log.Println(err)
+        return res, err
     }
     parameters := url.Values{}
     parameters.Add("client_id", oauthConf.ClientID)
@@ -33,8 +32,6 @@ func (c *common) HandleLogin(ctx *gin.Context, oauthConf *oauth2.Config, oauthSt
     parameters.Add("response_type", "code")
     parameters.Add("state", oauthState)
     URL.RawQuery = parameters.Encode()
-    url := URL.String()
 
-    log.Println(url)
-    ctx.Redirect(http.StatusTemporaryRedirect, url)
+    return URL.String(), nil
 }

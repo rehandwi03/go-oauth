@@ -4,8 +4,6 @@ package servicesfakes
 import (
 	"golang-oauth/services"
 	"sync"
-
-	"github.com/gin-gonic/gin"
 )
 
 type FakeFacebookOAuthInterface struct {
@@ -22,10 +20,17 @@ type FakeFacebookOAuthInterface struct {
 		result1 string
 		result2 error
 	}
-	HandleFacebookLoginStub        func(*gin.Context)
+	HandleFacebookLoginStub        func() (string, error)
 	handleFacebookLoginMutex       sync.RWMutex
 	handleFacebookLoginArgsForCall []struct {
-		arg1 *gin.Context
+	}
+	handleFacebookLoginReturns struct {
+		result1 string
+		result2 error
+	}
+	handleFacebookLoginReturnsOnCall map[int]struct {
+		result1 string
+		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -95,17 +100,22 @@ func (fake *FakeFacebookOAuthInterface) CallbackFacebookReturnsOnCall(i int, res
 	}{result1, result2}
 }
 
-func (fake *FakeFacebookOAuthInterface) HandleFacebookLogin(arg1 *gin.Context) {
+func (fake *FakeFacebookOAuthInterface) HandleFacebookLogin() (string, error) {
 	fake.handleFacebookLoginMutex.Lock()
+	ret, specificReturn := fake.handleFacebookLoginReturnsOnCall[len(fake.handleFacebookLoginArgsForCall)]
 	fake.handleFacebookLoginArgsForCall = append(fake.handleFacebookLoginArgsForCall, struct {
-		arg1 *gin.Context
-	}{arg1})
+	}{})
 	stub := fake.HandleFacebookLoginStub
-	fake.recordInvocation("HandleFacebookLogin", []interface{}{arg1})
+	fakeReturns := fake.handleFacebookLoginReturns
+	fake.recordInvocation("HandleFacebookLogin", []interface{}{})
 	fake.handleFacebookLoginMutex.Unlock()
 	if stub != nil {
-		fake.HandleFacebookLoginStub(arg1)
+		return stub()
 	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginCallCount() int {
@@ -114,17 +124,36 @@ func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginCallCount() int {
 	return len(fake.handleFacebookLoginArgsForCall)
 }
 
-func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginCalls(stub func(*gin.Context)) {
+func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginCalls(stub func() (string, error)) {
 	fake.handleFacebookLoginMutex.Lock()
 	defer fake.handleFacebookLoginMutex.Unlock()
 	fake.HandleFacebookLoginStub = stub
 }
 
-func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginArgsForCall(i int) *gin.Context {
-	fake.handleFacebookLoginMutex.RLock()
-	defer fake.handleFacebookLoginMutex.RUnlock()
-	argsForCall := fake.handleFacebookLoginArgsForCall[i]
-	return argsForCall.arg1
+func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginReturns(result1 string, result2 error) {
+	fake.handleFacebookLoginMutex.Lock()
+	defer fake.handleFacebookLoginMutex.Unlock()
+	fake.HandleFacebookLoginStub = nil
+	fake.handleFacebookLoginReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeFacebookOAuthInterface) HandleFacebookLoginReturnsOnCall(i int, result1 string, result2 error) {
+	fake.handleFacebookLoginMutex.Lock()
+	defer fake.handleFacebookLoginMutex.Unlock()
+	fake.HandleFacebookLoginStub = nil
+	if fake.handleFacebookLoginReturnsOnCall == nil {
+		fake.handleFacebookLoginReturnsOnCall = make(map[int]struct {
+			result1 string
+			result2 error
+		})
+	}
+	fake.handleFacebookLoginReturnsOnCall[i] = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeFacebookOAuthInterface) Invocations() map[string][][]interface{} {
